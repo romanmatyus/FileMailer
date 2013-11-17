@@ -1,0 +1,87 @@
+{*
+ * Template for MailPanel.
+ * 
+ * @author Roman Mátyus
+ * @copyright (c) Roman Mátyus 2013
+ * @license MIT
+ * @package FileMailer
+ *}
+
+{*
+ * @param $messages array   Array of all showed messages. Items are StdObject.
+ * @param $countAll integer Number of all showed messages.
+ * @param $countNew integer Number of new showed messages.
+ * @param $showed   array   Array of default showed header items.
+ *}
+<style>
+#mailpanel-count span {
+	top: -2px;
+	position: relative;
+}
+#mailpanel-count {
+background: red;
+border-radius: 8px;
+font-size: 8px;
+color: white;
+font-weight: 800;
+margin-left: -8px;
+z-index: 2;
+position: absolute;
+width: 15px;
+height: 15px;
+text-align: center;
+}
+img#mailpanel-icon {
+	z-index: 1;
+	position: relative;
+	top: 0px;
+}
+#nette-debug div.nette-mailPanel-box {
+	border:1px solid silver;
+}
+</style>
+
+<h1>MailPanel: {if $countAll==0}no{else}{$countAll}{/if} mail{if $countAll>1}s{/if}, {$countNew} new</h1>
+<div n:if="$countAll>0"><a href="/?mail-panel=delete-all">Delete All</a></div>
+<div n:if="$countAll>0" class="nette-inner">
+	<div n:foreach="$messages as $message">
+		<a class="nette-toggler" rel="#nette-mailPanel-message-{$message->message_id}" href="#">{$message->date|date:"d.m.Y H:i:s"} {$message->subject} ►</a>
+		<div id="nette-mailPanel-message-{$message->message_id}" class="nette-collapsed">
+			<table n:if="!empty($show)" n:inner-foreach="$show as $item">
+				<tr n:if="$message->$item">
+					<td>{$item|firstUpper}:</td>
+					<td>{$message->$item}</td>
+				</tr>
+			</table>
+			<a class="nette-toggler" rel="#nette-mailPanel-message-header-{$message->message_id}" href="#">header ►</a>
+			<span id="nette-mailPanel-message-header-{$message->message_id}" class="nette-collapsed">
+				<div class="nette-mailPanel-box">
+					<table n:inner-foreach="$message->header as $key => $value">
+						<tr>
+							<td>{$key}</td>
+							<td>{$value}</td>
+						</tr>
+					</table>
+				</div>
+			</span>
+			<a class="nette-toggler" rel="#nette-mailPanel-message-plain-{$message->message_id}" href="#">plain ►</a>
+			<span id="nette-mailPanel-message-plain-{$message->message_id}" class="nette-collapsed">
+				<div class="nette-mailPanel-box">
+					<pre>{$message->plain}</pre>
+				</div>
+			</span>
+			<a class="nette-toggler" rel="#nette-mailPanel-message-html-{$message->message_id}" href="#">html ►</a>
+			<span id="nette-mailPanel-message-html-{$message->message_id}" class="nette-collapsed">
+				<div class="nette-mailPanel-box">
+					{!$message->html}
+				</div>
+			</span>
+			<a class="nette-toggler" rel="#nette-mailPanel-message-raw-{$message->message_id}" href="#">raw ►</a>
+			<span id="nette-mailPanel-message-raw-{$message->message_id}" class="nette-collapsed">
+				<div class="nette-mailPanel-box">
+					<pre>{$message->raw}</pre>
+				</div>
+			</span>
+		</div>
+	</div>
+</div>
