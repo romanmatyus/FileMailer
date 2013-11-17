@@ -47,8 +47,7 @@ class FileMailer extends Object implements IMailer
 	{
 		$this->checkRequirements();
 		$content = $message->generateMessage();
-		preg_match("/----------[a-z0-9]{10}--/", $content, $match);
-		$message_id = substr($match[0], 10, -2);
+		$message_id = self::mailParser($content)->message_id;
 		$path = $this->tempDir."/".$this->prefix.$message_id;
 		if ($bytes = file_put_contents($path, $content))
 			return $bytes;
@@ -76,5 +75,65 @@ class FileMailer extends Object implements IMailer
 	{
 		return $this->prefix;
 	}
+	
+	/**
+	 * Parser of stored files.
+	 * @param  string $content
+	 * @return StdClass
+	 */
+	public static function mailParser($content)
+	{
+		preg_match("/Message-ID: <[a-zA-Z0-9-]*@[a-zA-Z0-9-]*>/", $content, $match);
+		$message_id = (isset($match[0])) ? substr($match[0], 13, -2) : NULL;
+		$message_id = explode("@",$message_id);
+		$message_id = $message_id[0];
 
+		$mess = explode("\r\n\r\n", $content);
+		preg_match_all("/[a-zA-Z-]*: .*/", $mess[0], $matches);
+		$header = array();
+		foreach ($matches[0] as $line) {
+			$temp = explode(": ",$line);
+			$header[strtolower($temp[0])] = iconv_mime_decode(str_replace(array("\r","\n","\r\n"),"",$temp[1]));
+		}
+		if (isset($header["date"]))
+			$header["date"] = new DateTime($header["date"]);
+			
+		if (preg_match("/\r\n\r\n----------/", $content)) { // html mail
+			$mess = explode("\r\n\r\n----------", $content);
+			$mess = substr($mess[1], 10, -22);
+			$mess = explode("----------", $mess);
+			$temp_mess = array();
+			foreach ($mess as $part) {
+				if (preg_match("/text\/html/", $part))
+					$temp_mess["html"] = $part;
+				elseif (preg_match("/text\/plain/", $part))
+					$temp_mess["plain"] = $part;
+			}
+			$mess = $temp_mess;
+			$temp_mess = array();
+			foreach ($mess as $type => $part) {
+				$temp_mess[$type] = explode("\r\n",$part);
+				for($i=0;$i<=3;$i++)
+					unset($temp_mess[$type][$i]);
+				$temp_mess[$type] = implode("\r\n",$temp_mess[$type]);
+			}
+			$mess = $temp_mess;
+		} else {
+			$mess = array(
+						"plain" => $mess[1], 
+						"html" => NULL,
+					);
+		}
+
+		return (object) array_merge(
+				array(
+					"message_id" => $message_id,
+					"header" => $header,
+					"plain" => $mess['plain'],
+					"html" => $mess['html'],
+					"raw" => $content,
+				),
+				$header
+			);
+	}
 }

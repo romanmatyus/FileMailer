@@ -164,7 +164,7 @@ class MailPanel extends Control implements IBarPanel {
 		foreach (Finder::findFiles('*')->in($this->fileMailer->tempDir) as $file) {
 			$message = $this->cache->load($file->getFilename());
 			if ($message === NULL) {
-				$message = self::mailParser(file_get_contents($file));
+				$message = FileMailer::mailParser(file_get_contents($file));
 				$this->cache->save($file->getFilename(),$message);
 			}
 			$time = new DateTime;
@@ -174,58 +174,6 @@ class MailPanel extends Control implements IBarPanel {
 			$this->messages[] = $message;
 		}
 		return TRUE;
-	}
-
-	/**
-	 * Parser of stored files.
-	 * @param  string $content
-	 * @return StdClass
-	 */
-	public static function mailParser($content)
-	{
-		preg_match("/----------[a-z0-9]{10}--/", $content, $match);
-		$message_id = (isset($match[0])) ? substr($match[0], 10, -2) : NULL;
-
-		$mess = explode("\r\n\r\n----------", $content);
-		preg_match_all("/[a-zA-Z-]*: .*/", $mess[0], $matches);
-		$header = array();
-		foreach ($matches[0] as $line) {
-			$temp = explode(": ",$line);
-			$header[strtolower($temp[0])] = iconv_mime_decode(substr($temp[1],0,-1));
-		}
-		if (isset($header["date"]))
-			$header["date"] = new DateTime($header["date"]);
-
-		$mess = explode("\r\n\r\n----------", $content);
-		$mess = substr($mess[1], 10, -22);
-		$mess = explode("----------", $mess);
-		$temp_mess = array();
-		foreach ($mess as $part) {
-			if (preg_match("/text\/html/", $part))
-				$temp_mess["html"] = $part;
-			elseif (preg_match("/text\/plain/", $part))
-				$temp_mess["plain"] = $part;
-		}
-		$mess = $temp_mess;
-		$temp_mess = array();
-		foreach ($mess as $type => $part) {
-			$temp_mess[$type] = explode("\r\n",$part);
-			for($i=0;$i<=3;$i++)
-				unset($temp_mess[$type][$i]);
-			$temp_mess[$type] = implode("\r\n",$temp_mess[$type]);
-		}
-		$mess = $temp_mess;
-
-		return (object) array_merge(
-				array(
-					"message_id" => $message_id,
-					"header" => $header,
-					"plain" => $mess['plain'],
-					"html" => $mess['html'],
-					"raw" => $content,
-				),
-				$header
-			);
 	}
 
 	/**

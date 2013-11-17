@@ -40,12 +40,11 @@ img#mailpanel-icon {
 	border:1px solid silver;
 }
 </style>
-
 <h1>MailPanel: {if $countAll==0}no{else}{$countAll}{/if} mail{if $countAll>1}s{/if}, {$countNew} new</h1>
 <div n:if="$countAll>0"><a href="/?mail-panel=delete-all">Delete All</a></div>
 <div n:if="$countAll>0" class="nette-inner">
 	<div n:foreach="$messages as $message">
-		<a class="nette-toggler" rel="#nette-mailPanel-message-{$message->message_id}" href="#">{$message->date|date:"d.m.Y H:i:s"} {$message->subject} ►</a>
+		<a class="nette-toggler" rel="#nette-mailPanel-message-{$message->message_id}" href="#">{$message->date} {$message->subject} ►</a>
 		<div id="nette-mailPanel-message-{$message->message_id}" class="nette-collapsed">
 			<table n:if="!empty($show)" n:inner-foreach="$show as $item">
 				<tr n:if="$message->$item">
@@ -70,8 +69,8 @@ img#mailpanel-icon {
 					<pre>{$message->plain}</pre>
 				</div>
 			</span>
-			<a class="nette-toggler" rel="#nette-mailPanel-message-html-{$message->message_id}" href="#">html ►</a>
-			<span id="nette-mailPanel-message-html-{$message->message_id}" class="nette-collapsed">
+			<a n:if="$message->html" class="nette-toggler" rel="#nette-mailPanel-message-html-{$message->message_id}" href="#">html ►</a>
+			<span n:if="$message->html" id="nette-mailPanel-message-html-{$message->message_id}" class="nette-collapsed">
 				<div class="nette-mailPanel-box">
 					{!$message->html}
 				</div>
