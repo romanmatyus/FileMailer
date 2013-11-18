@@ -1,14 +1,15 @@
 <?php
 namespace RM;
 
-use Nette\Application\UI\Control,
-	Nette\Diagnostics\IBarPanel,
-	Nette\Http\Request,
+use Nette\DateTime,
 	Nette\Application\Application,
-	Nette\Utils\Finder,
-	Nette\DateTime,
+	Nette\Application\UI\Control,
+	Nette\Diagnostics\IBarPanel,
 	Nette\Caching\Cache,
-	Nette\Caching\IStorage;
+	Nette\Caching\IStorage,
+	Nette\Http\Response,
+	Nette\Http\Request,
+	Nette\Utils\Finder;
 
 /**
  * Bar panel showing stored mails.
@@ -42,7 +43,8 @@ use Nette\Application\UI\Control,
  * 				- $show( [from,to] )
  * 				- $hideEmpty(TRUE)
  * 
- * @author Roman Mátyus
+ * @author Jan Drábek, Roman Mátyus
+ * @copyright (c) Jan Drábek 2013
  * @copyright (c) Roman Mátyus 2013
  * @license MIT
  * @package FileMailer
@@ -60,6 +62,9 @@ class MailPanel extends Control implements IBarPanel {
 
 	/** @var Cache */
 	private $cache;
+
+	/** @var Response */
+	private $response;
 
 	/** @var integer */
 	private $countAll = 0;
@@ -89,15 +94,19 @@ class MailPanel extends Control implements IBarPanel {
 	/** @var bool */
 	public $hideEmpty = TRUE;
 
-	public function __construct(Application $application, Request $request, FileMailer $fileMailer, IStorage $cacheStorage)
+	public function __construct(Application $application, Request $request, FileMailer $fileMailer, IStorage $cacheStorage, Response $response)
 	{
 		$this->application = $application;
 		$this->request = $request;
 		$this->fileMailer = $fileMailer;
 		$this->cache = new Cache($cacheStorage, "MailPanel");
+		$this->response = $response;
 		switch($request->getQuery("mail-panel")) {
 			case 'delete-all':
 				$this->handleDeleteAll();
+				break;
+			case 'download':
+				$this->handleDownload($request->getQuery("mail-panel-mail"),$request->getQuery("mail-panel-file"));
 				break;
 			default:
 				break;
@@ -136,23 +145,7 @@ class MailPanel extends Control implements IBarPanel {
 	}
 
 	/**
-	 * Delete all stored mails from filesystem an cache.
-	 */
-	public function handleDeleteAll()
-	{
-		foreach (Finder::findFiles('*')->in($this->fileMailer->tempDir) as $file)
-			unlink($file);
-		$this->cache->clean(
-			array(
-				Cache::ALL => TRUE,
-			));
-		header("Location: ".$this->request->getReferer());
-		exit;
-	}
-
-	/**
 	 * Process all messages.
-	 * @return mixed
 	 */
 	private function processMessage()
 	{
@@ -164,7 +157,7 @@ class MailPanel extends Control implements IBarPanel {
 		foreach (Finder::findFiles('*')->in($this->fileMailer->tempDir) as $file) {
 			$message = $this->cache->load($file->getFilename());
 			if ($message === NULL) {
-				$message = FileMailer::mailParser(file_get_contents($file));
+				$message = FileMailer::mailParser(file_get_contents($file),$file->getFilename());
 				$this->cache->save($file->getFilename(),$message);
 			}
 			$time = new DateTime;
@@ -173,7 +166,10 @@ class MailPanel extends Control implements IBarPanel {
 			$this->countAll++;
 			$this->messages[] = $message;
 		}
-		return TRUE;
+		usort($this->messages, function($a1, $a2) {
+			return $a2->date->getTimestamp() - $a1->date->getTimestamp();
+		});
+
 	}
 
 	/**
@@ -195,4 +191,32 @@ class MailPanel extends Control implements IBarPanel {
 		}
 	}
 
+	/**
+	 * Delete all stored mails from filesystem an cache.
+	 */
+	public function handleDeleteAll()
+	{
+		foreach (Finder::findFiles('*')->in($this->fileMailer->tempDir) as $file)
+			unlink($file);
+		$this->cache->clean(
+			array(
+				Cache::ALL => TRUE,
+			));
+		header("Location: ".$this->request->getReferer());
+		exit;
+	}
+
+	/**
+	 * Download attachment from file.
+	 */
+	public function handleDownload($filename, $filehash)
+	{
+		$message = $this->cache->load($filename);
+		$file = $message->attachments[$filehash];
+		$this->response->setContentType($file->type, 'UTF-8');
+		$this->response->setHeader('Content-Disposition', 'attachment; filename="' . $file->filename . '"');
+		$this->response->setHeader('Content-Length', strlen($file->data));
+		print base64_decode($file->data);
+		exit;
+	}
 }

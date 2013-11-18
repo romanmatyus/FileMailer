@@ -1,6 +1,6 @@
 #FileMailer
 
-Addon for catching mails in Nette to filesystem and showing it in debug bar.
+Addon for catching e-mails in Nette FW to filesystem and showing it in the Debug Bar.
 
 ```
 After configuring this addon is e-mails not sended, but ONLY stored to filesystem and showed in Debug Bar!
@@ -96,3 +96,18 @@ Options for addon customization.
 | $show           | array       | `array("subject", "from", "to")` | no          | Array of default displayed headers.                               |
 | $autoremove     | bool/string | `FALSE`                          | no          | Define limit for automatic remove old e-mails. E.g. `-2 minutes` |
 | $hideEmpty      | bool        | `TRUE`                           | no          | Hide empty panel?                                                |
+
+##Changelog
+
+###Version 0.2
+
+- Add support of e-mail attachments
+- Sort e-mails by date
+- HTML e-mails showed into iframe
+- Refactoring
+- Fix copyright
+- Many bug fixes
+
+###Version 0.1
+
+- Initial commit

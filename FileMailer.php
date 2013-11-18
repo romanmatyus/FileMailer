@@ -20,7 +20,8 @@ use Nette\Object,
  * 			setup:
  * 				- $tempDir(%appDir%/../temp/mails)
  *
- * @author Roman Mátyus
+ * @author Jan Drábek, Roman Mátyus
+ * @copyright (c) Jan Drábek 2013
  * @copyright (c) Roman Mátyus 2013
  * @license MIT
  * @package FileMailer
@@ -47,8 +48,10 @@ class FileMailer extends Object implements IMailer
 	{
 		$this->checkRequirements();
 		$content = $message->generateMessage();
-		$message_id = self::mailParser($content)->message_id;
-		$path = $this->tempDir."/".$this->prefix.$message_id;
+
+		preg_match('/Message-ID: <(?<message_id>\w+)@\w+>/', $content, $matches);
+
+		$path = $this->tempDir."/".$this->prefix.$matches['message_id'];
 		if ($bytes = file_put_contents($path, $content))
 			return $bytes;
 		else
@@ -71,34 +74,56 @@ class FileMailer extends Object implements IMailer
 			throw new InvalidArgumentException("Directory '".$this->tempDir."' is not writeable.");
 	}
 
-	public function getPrefix()
-	{
-		return $this->prefix;
-	}
-	
 	/**
 	 * Parser of stored files.
 	 * @param  string $content
+	 * @param  string $filename
 	 * @return StdClass
 	 */
-	public static function mailParser($content)
+	public static function mailParser($content, $filename = NULL)
 	{
-		preg_match("/Message-ID: <[a-zA-Z0-9-]*@[a-zA-Z0-9-]*>/", $content, $match);
-		$message_id = (isset($match[0])) ? substr($match[0], 13, -2) : NULL;
-		$message_id = explode("@",$message_id);
-		$message_id = $message_id[0];
-
 		$mess = explode("\r\n\r\n", $content);
 		preg_match_all("/[a-zA-Z-]*: .*/", $mess[0], $matches);
 		$header = array();
 		foreach ($matches[0] as $line) {
 			$temp = explode(": ",$line);
-			$header[strtolower($temp[0])] = iconv_mime_decode(str_replace(array("\r","\n","\r\n"),"",$temp[1]));
+			$header[strtolower($temp[0])] = iconv_mime_decode(Strings::trim($temp[1]));
 		}
 		if (isset($header["date"]))
 			$header["date"] = new DateTime($header["date"]);
-			
-		if (preg_match("/\r\n\r\n----------/", $content)) { // html mail
+
+		$message_id = explode("@",$header['message-id']);
+		$message_id = substr($message_id[0], 1);
+
+		$attachments = array();
+		$mess = array(
+					"plain" => NULL,
+					"html" => NULL,
+				);
+		if (preg_match("/multipart\/mixed/", $content)) { // mail with attachments
+			foreach (explode("----------",$content) as $part) {
+				if (preg_match("/Content-Type: text\/plain; charset=UTF-8/", $part)) {
+					$tmp = explode("\r\n\r\n", $part);
+					$mess["plain"] = Strings::trim($tmp[1]);
+				} elseif (preg_match("/Content-Type: text\/html; charset=UTF-8/", $part)) {
+					$tmp = explode("\r\n\r\n", $part);
+					$mess["html"] = Strings::trim($tmp[1]);
+				} elseif (preg_match("/Content-Disposition: attachment;/", $part)) {
+					$tmp = explode("\r\n", $part);
+					unset($tmp[0]);
+					$part = implode("\r\n", $tmp);
+					$tmp = explode("\r\n\r\n", $part);
+					$tmp_header = explode("\r\n", $tmp[0]);
+					$output = array(
+							"type" => substr($tmp_header[0], 14),
+							"encoding" => substr($tmp_header[1], 27),
+							"filename" => substr($tmp_header[2], 43, -1),
+							"data" => $tmp[1],
+						);
+					$attachments[md5($output['type'].$output['encoding'].$output['filename'].$output['data'])] = (object) $output;
+				}
+			}
+		} elseif (preg_match("/multipart\/alternative/", $content)) { // html mail
 			$mess = explode("\r\n\r\n----------", $content);
 			$mess = substr($mess[1], 10, -22);
 			$mess = explode("----------", $mess);
@@ -118,22 +143,29 @@ class FileMailer extends Object implements IMailer
 				$temp_mess[$type] = implode("\r\n",$temp_mess[$type]);
 			}
 			$mess = $temp_mess;
-		} else {
+		} elseif (preg_match("/text\/plain/", $content)) { // plaintext mail
 			$mess = array(
-						"plain" => $mess[1], 
+						"plain" => $mess[1],
 						"html" => NULL,
 					);
 		}
 
 		return (object) array_merge(
 				array(
+					"filename" => $filename,
 					"message_id" => $message_id,
 					"header" => $header,
 					"plain" => $mess['plain'],
 					"html" => $mess['html'],
 					"raw" => $content,
+					"attachments" => $attachments,
 				),
 				$header
 			);
+	}
+
+	public function getPrefix()
+	{
+		return $this->prefix;
 	}
 }
