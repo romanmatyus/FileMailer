@@ -6,7 +6,7 @@ Addon for catching e-mails in Nette FW to filesystem and showing it in the Debug
 After configuring this addon is e-mails not sended, but ONLY stored to filesystem and showed in Debug Bar!
 ```
 
-![Demo](http://i40.tinypic.com/oh91dd.png)
+![Demo](http://i41.tinypic.com/t9uuzq.png)
 
 ##Killer features
 
