@@ -49,7 +49,7 @@ class FileMailer extends Object implements IMailer
 		$this->checkRequirements();
 		$content = $message->generateMessage();
 
-		preg_match('/Message-ID: <(?<message_id>\w+)[^>]+>/', $content, $matches);
+		preg_match('/Message-ID: <(?<message_id>\w+)@\w+>/', $content, $matches);
 
 		$path = $this->tempDir."/".$this->prefix.$matches['message_id'];
 		if ($bytes = file_put_contents($path, $content))
@@ -67,7 +67,7 @@ class FileMailer extends Object implements IMailer
 			throw new InvalidArgumentException("Directory for temporary files is not defined.");
 		if (!is_dir($this->tempDir)) {
 			mkdir($this->tempDir);
-			if (!is_dir($this->tempDir))
+			if (!is_dir($this->tempDir)) 
 				throw new FileNotFoundException("'".$this->tempDir."' is not directory.");
 		}
 		if (!is_writable($this->tempDir))
@@ -82,8 +82,8 @@ class FileMailer extends Object implements IMailer
 	 */
 	public static function mailParser($content, $filename = NULL)
 	{
-		$message = explode("\r\n\r\n", $content);
-		preg_match_all("/[a-zA-Z-]*: .*/", $message[0], $matches);
+		$mess = explode("\r\n\r\n", $content);
+		preg_match_all("/[a-zA-Z-]*: .*/", $mess[0], $matches);
 		$header = array();
 		foreach ($matches[0] as $line) {
 			$temp = explode(": ",$line);
@@ -145,7 +145,7 @@ class FileMailer extends Object implements IMailer
 			$mess = $temp_mess;
 		} elseif (preg_match("/text\/plain/", $content)) { // plaintext mail
 			$mess = array(
-						"plain" => $message[1],
+						"plain" => $mess[1],
 						"html" => NULL,
 					);
 		}
