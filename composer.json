@@ -1,7 +1,7 @@
 {
 	"name": "rm/filemailer",
 	"type": "library",
-	"version": "0.3",
+	"version": "0.3.2",
 	"description": "Addon for catching e-mails in Nette FW to filesystem and showing it in the Debug Bar.",
 	"keywords": ["nette", "mailer", "mail", "debugbar", "debuging"],
 	"homepage": "https://github.com/romanmatyus/FileMailer",
