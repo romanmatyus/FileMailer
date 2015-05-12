@@ -1,15 +1,15 @@
 <?php
 namespace RM;
 
-use Nette\DateTime,
-	Nette\Application\Application,
-	Nette\Application\UI\Control,
-	Nette\Diagnostics\IBarPanel,
-	Nette\Caching\Cache,
-	Nette\Caching\IStorage,
-	Nette\Http\Response,
-	Nette\Http\Request,
-	Nette\Utils\Finder;
+use Nette\DateTime;
+use Nette\Application\Application;
+use Nette\Application\UI\Control;
+use Nette\Caching\Cache;
+use Nette\Caching\IStorage;
+use Nette\Http\Response;
+use Nette\Http\Request;
+use Nette\Utils\Finder;
+use Tracy\IBarPanel;
 
 /**
  * Bar panel showing stored mails.
@@ -79,7 +79,7 @@ class MailPanel extends Control implements IBarPanel {
 	private $processed = FALSE;
 
 	/** @var string */
-	public $newMessageTime = "-10 seconds";
+	public $newMessageTime = "-2 seconds";
 
 	/** @var array */
 	public $show = array(
@@ -89,28 +89,30 @@ class MailPanel extends Control implements IBarPanel {
 				);
 
 	/** @var mixed */
-	public $autoremove = FALSE;
+	public $autoremove = '-15 seconds';
 
 	/** @var bool */
 	public $hideEmpty = TRUE;
 
-	public function __construct(Application $application, Request $request, FileMailer $fileMailer, IStorage $cacheStorage, Response $response)
+	public function __construct(Application $application, Request $request, IStorage $cacheStorage, Response $response)
 	{
 		$this->application = $application;
 		$this->request = $request;
-		$this->fileMailer = $fileMailer;
 		$this->cache = new Cache($cacheStorage, "MailPanel");
 		$this->response = $response;
 		switch($request->getQuery("mail-panel")) {
-			case 'delete-all':
-				$this->handleDeleteAll();
-				break;
 			case 'download':
 				$this->handleDownload($request->getQuery("mail-panel-mail"),$request->getQuery("mail-panel-file"));
 				break;
 			default:
 				break;
 		}
+	}
+
+	public function setFileMailer(FileMailer $fileMailer)
+	{
+		$this->fileMailer = $fileMailer;
+		return $this;
 	}
 
 	/**
@@ -121,8 +123,8 @@ class MailPanel extends Control implements IBarPanel {
 		$this->processMessage();
 		if ($this->countAll===0&&$this->hideEmpty)
 			return;
-		$count = ($this->countNew)?'<span id="mailpanel-count"><span>'.$this->countNew.'</span></span>&nbsp;&nbsp;':NULL;
-		return '<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAITSURBVBgZpcHLThNhGIDh9/vn7/RApwc5VCmFWBPi1mvwAlx7BW69Afeu3bozcSE7E02ILjCRhRrds8AEbKVS2gIdSjvTmf+TYqLu+zyiqszDMCf75PnnnVwhuNcLpwsXk8Q4BYeSOsWpkqrinJI6JXVK6lSRdDq9PO+19vb37XK13Hj0YLMUTVVyWY//Cf8IVwQEGEeJN47S1YdPo4npDpNmnDh5udOh1YsZRcph39EaONpnjs65oxsqvZEyTaHdj3n2psPpKDLBcuOOGUWpZDOG+q0S7751ObuYUisJGQ98T/Ct4Fuo5IX+MGZr95jKjRKLlSxXxFxOEmaaN4us1Upsf+1yGk5ZKhp8C74H5ZwwCGO2drssLZZo1ouIcs2MJikz1oPmapHlaoFXH1oMwphyTghyQj+MefG+RblcoLlaJG/5y4zGCTMikEwTctaxXq/w9kuXdm9Cuzfh9acujXqFwE8xmuBb/hCwl1GKAnGccDwIadQCfD9DZ5Dj494QA2w2qtQW84wmMZ1eyFI1QBVQwV5GiaZOpdsPaSwH5HMZULi9UmB9pYAAouBQbMHHrgQcnQwZV/KgTu1o8PMgipONu2t5KeaNiEkxgAiICDMCCFeEK5aNauAOfoXx8KR9ZOOLk8P7j7er2WBhwWY9sdbDeIJnwBjBWBBAhGsCmiZxPD4/7Z98b/0QVWUehjkZ5vQb/Un5e/DIsVsAAAAASUVORK5CYII=" id="mailpanel-icon"/>'.$count;
+
+		return '<span title="FileMailer"><svg><path d="m 0.9 4.5 6.6 7 c 0 0 0 0 0 0 0.2 0.1 0.3 0.2 0.4 0.2 0.1 0 0.3 -0 0.4 -0.2 l 0 -0 L 15.1 4.5 0.9 4.5 z M 0 5.4 0 15.6 4.8 10.5 0 5.4 z m 16 0 L 11.2 10.5 16 15.6 16 5.4 z M 5.7 11.4 0.9 16.5 l 14.2 0 -4.8 -5.1 -1 1.1 -0 0 -0 0 c -0.4 0.3 -0.8 0.5 -1.2 0.5 -0.4 0 -0.9 -0.2 -1.2 -0.5 l -0 -0 -0 -0 -1 -1.1 z" style="fill:#'.(($this->countNew>0)?'E90D0D':'348AD2').'"/></svg><span class="tracy-label">'.(($this->countNew>0)?$this->countNew:NULL).'</span></span>';
 	}
 
 	/**
@@ -189,21 +191,6 @@ class MailPanel extends Control implements IBarPanel {
 				}
 			}
 		}
-	}
-
-	/**
-	 * Delete all stored mails from filesystem an cache.
-	 */
-	public function handleDeleteAll()
-	{
-		foreach (Finder::findFiles('*')->in($this->fileMailer->tempDir) as $file)
-			unlink($file);
-		$this->cache->clean(
-			array(
-				Cache::ALL => TRUE,
-			));
-		header("Location: ".$this->request->getReferer());
-		exit;
 	}
 
 	/**

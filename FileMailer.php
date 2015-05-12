@@ -87,7 +87,7 @@ class FileMailer extends Object implements IMailer
 		$header = array();
 		foreach ($matches[0] as $line) {
 			$temp = explode(": ",$line);
-			$header[strtolower($temp[0])] = iconv_mime_decode(Strings::trim($temp[1]));
+			$header[strtolower($temp[0])] = iconv_mime_decode(Strings::trim($temp[1]), 0, 'UTF-8');
 		}
 		if (isset($header["date"]))
 			$header["date"] = new DateTime($header["date"]);

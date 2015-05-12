@@ -1,7 +1,7 @@
 {
 	"name": "rm/filemailer",
 	"type": "library",
-	"version": "0.2",
+	"version": "0.3",
 	"description": "Addon for catching e-mails in Nette FW to filesystem and showing it in the Debug Bar.",
 	"keywords": ["nette", "mailer", "mail", "debugbar", "debuging"],
 	"homepage": "https://github.com/romanmatyus/FileMailer",
@@ -14,9 +14,14 @@
 	],
 	"require": {
 		"php" : ">=5.3.0",
-		"nette/nette": ">=2.0.7"
+		"nette/applications": ">=2.2",
+		"nette/caching": ">=2.2",
+		"nette/http": ">=2.2",
+		"nette/mail": ">=2.2",
+		"nette/utils": ">=2.2",
+		"latte/latte": ">=2.2"
 	},
 	"autoload": {
-		"classmap": ["FileMailer.php", "MailPanel.php"]
+		"classmap": ["FileMailer.php", "MailPanel.php", "MailPanelExtension.php"]
 	}
 }
