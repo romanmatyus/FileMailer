@@ -14,7 +14,7 @@
 	],
 	"require": {
 		"php" : ">=5.3.0",
-		"nette/applications": ">=2.2",
+		"nette/application": ">=2.2",
 		"nette/caching": ">=2.2",
 		"nette/http": ">=2.2",
 		"nette/mail": ">=2.2",
