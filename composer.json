@@ -22,6 +22,6 @@
 		"latte/latte": ">=2.2"
 	},
 	"autoload": {
-		"classmap": ["FileMailer.php", "MailPanel.php", "MailPanelExtension.php"]
+		"classmap": ["src/FileMailer/"]
 	}
 }
