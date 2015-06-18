@@ -8,23 +8,20 @@ use Nette\DI\CompilerExtension;
 use Nette\DI\Helpers;
 use Nette\DI\ServiceDefinition;
 
+
 /**
- * Class for register extension AssetsCollector.
+ * Nette DI extension for FileMailer and MailPanel.
  *
- * @author Roman Mátyus
+ * @author    Roman Mátyus
  * @copyright (c) Roman Mátyus 2012
- * @license MIT
+ * @license   MIT
  */
 class MailPanelExtension extends CompilerExtension
 {
 	/** @var [] */
 	public $defaults = array(
 		'newMessageTime' => '-2 seconds',
-		'show' => array(
-					'subject',
-					'from',
-					'to',
-				),
+		'show' => array('subject', 'from', 'to'),
 		'autoremove' => '-5 seconds',
 		'hideEmpty' => TRUE,
 		'tempDir' => '%tempDir%/mails',
@@ -42,8 +39,9 @@ class MailPanelExtension extends CompilerExtension
 		$this->validateConfig($this->defaults);
 		$config = $this->getConfig($this->defaults);
 
-		foreach ($builder->findByType('Nette\Mail\IMailer') as $name => $def)
+		foreach ($builder->findByType('Nette\Mail\IMailer') as $name => $def) {
 			$builder->removeDefinition($name);
+		}
 
 		if ($config['debugger'] && interface_exists('Tracy\IBarPanel')) {
 			$builder->addDefinition($this->prefix('panel'))
@@ -61,9 +59,10 @@ class MailPanelExtension extends CompilerExtension
 			->addSetup('@Tracy\Bar::addPanel', array($this->prefix('@panel')));
 	}
 
+
 	/**
-	 * Register MailPanel to application.
-	 * @param \Nette\DI\Configurator $config
+	 * Register extension to DI Container.
+	 * @param Configurator $config
 	 */
 	public static function register(Configurator $config)
 	{
@@ -71,4 +70,5 @@ class MailPanelExtension extends CompilerExtension
 			$compiler->addExtension('mailPanel', new MailPanelExtension());
 		};
 	}
+
 }
