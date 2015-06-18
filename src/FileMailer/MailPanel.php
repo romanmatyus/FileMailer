@@ -117,6 +117,7 @@ class MailPanel extends Control implements IBarPanel {
 		$this->processMessage();
 
 		$latte = new \Latte\Engine;
+		$latte->setTempDirectory($this->fileMailer->getTempDirectory());
 		return $latte->renderToString(__DIR__ . '/MailPanel.latte', [
 			'messages' => $this->messages,
 			'countNew' => $this->countNew,
