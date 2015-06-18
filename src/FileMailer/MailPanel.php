@@ -8,7 +8,6 @@ use Nette\Caching\Cache;
 use Nette\Caching\IStorage;
 use Nette\Http\Response;
 use Nette\Http\Request;
-use Nette\Utils\Finder;
 use Tracy\IBarPanel;
 
 
@@ -138,15 +137,15 @@ class MailPanel extends Control implements IBarPanel {
 		$this->processed = TRUE;
 		$this->autoremove();
 
-		foreach (Finder::findFiles('*')->in($this->fileMailer->getTempDirectory()) as $file) {
-			$message = $this->cache->load($file->getFilename());
+		foreach ($this->getEmailFiles() as $key => $path) {
+			$message = $this->cache->load($key);
 			if ($message === NULL) {
-				$message = FileMailer::mailParser(file_get_contents($file), $file->getFilename());
-				$this->cache->save($file->getFilename(),$message);
+				$message = FileMailer::mailParser(file_get_contents($path), $key);
+				$this->cache->save($key, $message);
 			}
 
 			$time = new DateTime;
-			if ($message->date>$time->modify($this->newMessageTime)) {
+			if ($message->date > $time->modify($this->newMessageTime)) {
 				$this->countNew++;
 			}
 
@@ -154,7 +153,7 @@ class MailPanel extends Control implements IBarPanel {
 			$this->messages[] = $message;
 		}
 
-		usort($this->messages, function($a1, $a2) {
+		usort($this->messages, function ($a1, $a2) {
 			return $a2->date->getTimestamp() - $a1->date->getTimestamp();
 		});
 	}
@@ -166,14 +165,14 @@ class MailPanel extends Control implements IBarPanel {
 	private function autoremove()
 	{
 		if ($this->autoremove) {
-			foreach (Finder::findFiles('*')->in($this->fileMailer->getTempDirectory()) as $file) {
+			foreach ($this->getEmailFiles() as $key => $path) {
 				$now = new DateTime;
-				$file_date = new DateTime('@' . filemtime($file));
+				$file_date = new DateTime('@' . filemtime($path));
 				$file_date->setTimezone($now->getTimezone());
 				$remove_date = $now->modify($this->autoremove);
 				if ($file_date < $remove_date) {
-					$this->cache->remove($file->getFilename());
-					unlink($file);
+					$this->cache->remove($key);
+					unlink($path);
 				}
 			}
 		}
@@ -192,6 +191,16 @@ class MailPanel extends Control implements IBarPanel {
 		$this->response->setHeader('Content-Length', strlen($file->data));
 		print base64_decode($file->data);
 		exit;
+	}
+
+
+	/**
+	 * @return string[]
+	 */
+	private function getEmailFiles()
+	{
+		$files = glob($this->fileMailer->getTempDirectory() . DIRECTORY_SEPARATOR . '*.' . FileMailer::FILE_EXTENSION);
+		return array_combine(array_map('basename', $files), $files);
 	}
 
 }
