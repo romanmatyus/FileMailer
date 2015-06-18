@@ -100,7 +100,7 @@ class MailPanel extends Control implements IBarPanel {
 	public function getTab()
 	{
 		$this->processMessage();
-		if ($this->countAll===0&&$this->hideEmpty) {
+		if ($this->countAll === 0 && $this->hideEmpty) {
 			return;
 		}
 
@@ -139,7 +139,7 @@ class MailPanel extends Control implements IBarPanel {
 	 */
 	private function processMessage()
 	{
-		if ($this->processed) {
+		if ($this->processed || !is_dir($this->fileMailer->tempDir)) {
 			return;
 		}
 		$this->processed = TRUE;
