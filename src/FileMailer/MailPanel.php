@@ -135,13 +135,20 @@ class MailPanel extends Control implements IBarPanel {
 			return;
 		}
 		$this->processed = TRUE;
-		$this->autoremove();
 
-		foreach ($this->getEmailFiles() as $key => $path) {
-			$message = $this->cache->load($key);
+		$files = glob($this->fileMailer->getTempDirectory() . DIRECTORY_SEPARATOR . '*.' . FileMailer::FILE_EXTENSION);
+		foreach ($files as $path) {
+			$cacheKey = basename($path);
+
+			if ($this->removeExpired($path)) {
+				$this->cache->remove($cacheKey);
+				continue;
+			}
+
+			$message = $this->cache->load($cacheKey);
 			if ($message === NULL) {
-				$message = FileMailer::mailParser(file_get_contents($path), $key);
-				$this->cache->save($key, $message);
+				$message = FileMailer::mailParser(file_get_contents($path), $cacheKey);
+				$this->cache->save($cacheKey, $message);
 			}
 
 			$time = new DateTime;
@@ -160,22 +167,24 @@ class MailPanel extends Control implements IBarPanel {
 
 
 	/**
-	 * Autoremove mails from filesystem an cache by argument 'autoremove'.
+	 * Auto removes email file when expired.
+	 * @param  string
+	 * @return bool
 	 */
-	private function autoremove()
+	private function removeExpired($path)
 	{
 		if ($this->autoremove) {
-			foreach ($this->getEmailFiles() as $key => $path) {
-				$now = new DateTime;
-				$file_date = new DateTime('@' . filemtime($path));
-				$file_date->setTimezone($now->getTimezone());
-				$remove_date = $now->modify($this->autoremove);
-				if ($file_date < $remove_date) {
-					$this->cache->remove($key);
-					unlink($path);
-				}
+			$now = new DateTime;
+			$file_date = new DateTime('@' . filemtime($path));
+			$file_date->setTimezone($now->getTimezone());
+			$remove_date = $now->modify($this->autoremove);
+			if ($file_date < $remove_date) {
+				unlink($path);
+				return TRUE;
 			}
 		}
+
+		return FALSE;
 	}
 
 
@@ -191,16 +200,6 @@ class MailPanel extends Control implements IBarPanel {
 		$this->response->setHeader('Content-Length', strlen($file->data));
 		print base64_decode($file->data);
 		exit;
-	}
-
-
-	/**
-	 * @return string[]
-	 */
-	private function getEmailFiles()
-	{
-		$files = glob($this->fileMailer->getTempDirectory() . DIRECTORY_SEPARATOR . '*.' . FileMailer::FILE_EXTENSION);
-		return array_combine(array_map('basename', $files), $files);
 	}
 
 }
