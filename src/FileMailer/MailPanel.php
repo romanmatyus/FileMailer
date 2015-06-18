@@ -2,7 +2,7 @@
 
 namespace RM;
 
-use Nette\DateTime;
+use Nette\Utils\DateTime;
 use Nette\Application\Application;
 use Nette\Application\UI\Control;
 use Nette\Caching\Cache;
@@ -46,7 +46,7 @@ class MailPanel extends Control implements IBarPanel {
 	private $countNew = 0;
 
 	/** @var array */
-	private $messages = array();
+	private $messages = [];
 
 	/** @var bool */
 	private $processed = FALSE;
@@ -55,7 +55,7 @@ class MailPanel extends Control implements IBarPanel {
 	public $newMessageTime = '-2 seconds';
 
 	/** @var array */
-	public $show = array("subject", "from", "to");
+	public $show = ['subject', 'from', 'to'];
 
 	/** @var mixed */
 	public $autoremove = '-15 seconds';

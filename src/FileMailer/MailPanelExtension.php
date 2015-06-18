@@ -2,11 +2,10 @@
 
 namespace RM\MailPanel\DI;
 
-use Nette\DI\Configurator;
+use Nette\Configurator;
 use Nette\DI\Compiler;
 use Nette\DI\CompilerExtension;
 use Nette\DI\Helpers;
-use Nette\DI\ServiceDefinition;
 
 
 /**
@@ -19,14 +18,14 @@ use Nette\DI\ServiceDefinition;
 class MailPanelExtension extends CompilerExtension
 {
 	/** @var [] */
-	public $defaults = array(
+	public $defaults = [
 		'newMessageTime' => '-2 seconds',
-		'show' => array('subject', 'from', 'to'),
+		'show' => ['subject', 'from', 'to'],
 		'autoremove' => '-5 seconds',
 		'hideEmpty' => TRUE,
 		'tempDir' => '%tempDir%/mails',
 		'debugger' => TRUE,
-	);
+	];
 
 
 	/**
@@ -46,23 +45,23 @@ class MailPanelExtension extends CompilerExtension
 		if ($config['debugger'] && interface_exists('Tracy\IBarPanel')) {
 			$builder->addDefinition($this->prefix('panel'))
 				->setClass('RM\MailPanel')
-				->addSetup('$newMessageTime', array($config['newMessageTime']))
-				->addSetup('$show', array(array_unique($config['show'])))
-				->addSetup('$autoremove', array($config['autoremove']))
-				->addSetup('$hideEmpty', array($config['hideEmpty']));
+				->addSetup('$newMessageTime', [$config['newMessageTime']])
+				->addSetup('$show', [array_unique($config['show'])])
+				->addSetup('$autoremove', [$config['autoremove']])
+				->addSetup('$hideEmpty', [$config['hideEmpty']]);
 		}
 
-		$mailer = $builder->addDefinition($this->prefix('mailer'))
+		$builder->addDefinition($this->prefix('mailer'))
 			->setClass('RM\FileMailer')
-			->addSetup('$tempDir', array(Helpers::expand($config['tempDir'], $builder->parameters)))
-			->addSetup('@RM\MailPanel::setFileMailer', array('@self'))
-			->addSetup('@Tracy\Bar::addPanel', array($this->prefix('@panel')));
+			->addSetup('$tempDir', [Helpers::expand($config['tempDir'], $builder->parameters)])
+			->addSetup('@RM\MailPanel::setFileMailer', ['@self'])
+			->addSetup('@Tracy\Bar::addPanel', [$this->prefix('@panel')]);
 	}
 
 
 	/**
 	 * Register extension to DI Container.
-	 * @param Configurator $config
+	 * @param  Configurator $config
 	 */
 	public static function register(Configurator $config)
 	{
