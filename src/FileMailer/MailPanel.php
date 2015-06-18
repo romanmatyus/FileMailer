@@ -3,7 +3,6 @@
 namespace RM;
 
 use Nette\Utils\DateTime;
-use Nette\Application\Application;
 use Nette\Application\UI\Control;
 use Nette\Caching\Cache;
 use Nette\Caching\IStorage;
@@ -26,9 +25,6 @@ class MailPanel extends Control implements IBarPanel {
 
 	/** @var Request */
 	private $request;
-
-	/** @var Application */
-	private $application;
 
 	/** @var FileMailer */
 	private $fileMailer;
@@ -64,9 +60,8 @@ class MailPanel extends Control implements IBarPanel {
 	public $hideEmpty = TRUE;
 
 
-	public function __construct(Application $application, Request $request, IStorage $cacheStorage, Response $response)
+	public function __construct(Request $request, IStorage $cacheStorage, Response $response)
 	{
-		$this->application = $application;
 		$this->request = $request;
 		$this->cache = new Cache($cacheStorage, 'MailPanel');
 		$this->response = $response;
@@ -122,15 +117,13 @@ class MailPanel extends Control implements IBarPanel {
 
 		$this->processMessage();
 
-		ob_start();
-		$template = clone $this->application->getPresenter()->template;
-		$template->setFile(__DIR__ . '/MailPanel.latte');
-		$template->messages = $this->messages;
-		$template->countNew = $this->countNew;
-		$template->countAll = $this->countAll;
-		$template->show = $this->show;
-		$template->render();
-		return ob_get_clean();
+		$latte = new \Latte\Engine;
+		return $latte->renderToString(__DIR__ . '/MailPanel.latte', [
+			'messages' => $this->messages,
+			'countNew' => $this->countNew,
+			'countAll' => $this->countAll,
+			'show' => $this->show,
+		]);
 	}
 
 

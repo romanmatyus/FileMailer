@@ -1,10 +1,10 @@
 <div class="tracy-ContainerPanel">
-	<h1>MailPanel: {if $countAll==0}no{else}{$countAll}{/if} mail{if $countAll>1}s{/if}, {$countNew} new</h1>
+	<h1>MailPanel: {if $countAll == 0}no{else}{$countAll}{/if} mail{if $countAll > 1}s{/if}, {$countNew} new</h1>
 	<div class="tracy-inner">
 		<div n:foreach="$messages as $message">
 			<div class="tracy-dump">
-				<span class="tracy-toggle tracy-collapsed"><span class="tracy-dump-object">{ifset $message->subject}{$message->subject}{else}detail{/ifset}</span> <span n:if="!empty($show)" class="tracy-dump-hash">{$message->date|date:"H:i:s"}</span></span>
-				<div n:if="!empty($show)" class="tracy-collapsed">
+				<span class="tracy-toggle tracy-collapsed"><span class="tracy-dump-object">{ifset $message->subject}{$message->subject}{else}detail{/ifset}</span> <span n:if="$show" class="tracy-dump-hash">{$message->date|date:"H:i:s"}</span></span>
+				<div n:if="$show" class="tracy-collapsed">
 					<table n:inner-foreach="$show as $item">
 						<tr n:ifset="$message->$item">
 							<td>{$item|firstUpper}:</td>
@@ -13,7 +13,7 @@
 					</table>
 				</div>
 
-				<span class="tracy-toggle tracy-collapsed"><span class="tracy-dump-hash">header</span></span>
+				<span class="tracy-toggle tracy-collapsed"><span class="tracy-dump-hash">headers</span></span>
 				<span class="tracy-collapsed">
 					<table n:inner-foreach="$message->header as $key => $value">
 						<tr>
@@ -33,7 +33,7 @@
 					{var $mailContent = str_replace(array("'","\n","\r","\t"),array("&apos;","","",""),$message->html)}
 					<iframe id="tracy-mailPanel-message-html-iframe-{$message->message_id}"></iframe>
 					<script type="text/javascript">
-						document.getElementById('tracy-mailPanel-message-html-iframe-{!$message->message_id}').contentWindow.document.write({$mailContent});
+						document.getElementById('tracy-mailPanel-message-html-iframe-{$message->message_id|noEscape}').contentWindow.document.write({$mailContent});
 					</script>
 				</div>
 
