@@ -47,7 +47,7 @@ class FileMailer extends Object implements IMailer
 		$this->checkRequirements();
 		$content = $message->generateMessage();
 
-		preg_match('/Message-ID: <(?<message_id>\w+)[^>]+>/', $content, $matches);
+		preg_match('~Message-ID: <(?<message_id>\w+)[^>]+>~', $content, $matches);
 
 		$path = $this->tempDir . '/'. $this->prefix . $matches['message_id'];
 		if ($bytes = file_put_contents($path, $content)) {
@@ -84,7 +84,7 @@ class FileMailer extends Object implements IMailer
 	public static function mailParser($content, $filename = NULL)
 	{
 		$message = explode("\r\n\r\n", $content);
-		preg_match_all('/[a-zA-Z-]*: .*/', $message[0], $matches);
+		preg_match_all('~[a-zA-Z-]*: .*~', $message[0], $matches);
 		$header = array();
 		foreach ($matches[0] as $line) {
 			$temp = explode(': ',$line);
@@ -102,17 +102,17 @@ class FileMailer extends Object implements IMailer
 			'plain' => NULL,
 			'html' => NULL,
 		);
-		if (preg_match('/multipart\/mixed/', $content)) { // mail with attachments
+		if (preg_match('~multipart/mixed~', $content)) { // mail with attachments
 			foreach (explode('----------',$content) as $part) {
-				if (preg_match('/Content-Type: text\/plain; charset=UTF-8/', $part)) {
+				if (preg_match('~Content-Type: text/plain; charset=UTF-8~', $part)) {
 					$tmp = explode("\r\n\r\n", $part);
 					$mess['plain'] = Strings::trim($tmp[1]);
 
-				} elseif (preg_match('/Content-Type: text\/html; charset=UTF-8/', $part)) {
+				} elseif (preg_match('~Content-Type: text/html; charset=UTF-8~', $part)) {
 					$tmp = explode("\r\n\r\n", $part);
 					$mess["html"] = Strings::trim($tmp[1]);
 
-				} elseif (preg_match('/Content-Disposition: attachment;/', $part)) {
+				} elseif (preg_match('~Content-Disposition: attachment;~', $part)) {
 					$tmp = explode("\r\n", $part);
 					unset($tmp[0]);
 					$part = implode("\r\n", $tmp);
@@ -128,15 +128,15 @@ class FileMailer extends Object implements IMailer
 				}
 			}
 
-		} elseif (preg_match('/multipart\/alternative/', $content)) { // html mail
+		} elseif (preg_match('~multipart/alternative~', $content)) { // html mail
 			$mess = explode("\r\n\r\n----------", $content);
 			$mess = substr($mess[1], 10, -22);
 			$mess = explode('----------', $mess);
 			$temp_mess = array();
 			foreach ($mess as $part) {
-				if (preg_match('/text\/html/', $part)) {
+				if (preg_match('~text/html~', $part)) {
 					$temp_mess['html'] = $part;
-				} elseif (preg_match('/text\/plain/', $part)) {
+				} elseif (preg_match('~text/plain~', $part)) {
 					$temp_mess['plain'] = $part;
 				}
 			}
@@ -151,7 +151,7 @@ class FileMailer extends Object implements IMailer
 			}
 			$mess = $temp_mess;
 
-		} elseif (preg_match('/text\/plain/', $content)) { // plaintext mail
+		} elseif (preg_match('~text/plain~', $content)) { // plaintext mail
 			$mess = array(
 				'plain' => $message[1],
 				'html' => NULL,
