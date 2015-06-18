@@ -40,18 +40,15 @@ mailer:
 	show: [subject, from, to]       # which headers show in overview
 	autoremove: '-5 seconds'        # how old emails are purged
 	hideEmpty: yes                  # hide bar icon when no emails?
-	tempDir: '%tempDir%/mails       # where to store emails
 	debugger: yes                   # enable Tracy bar
+	tempDir: '%tempDir/mails'       # change e-mails store directory
 ```
 
 ### Manual setup
 Replace the Nette's default IMailer service and register Tracy bar panel:
 ```
 services:
-	mail.mailer:
-		class: RM\FileMailer
-		setup:
-			- $tempDir(%tempDir%/mails)
+	mail.mailer: RM\FileMailer(%tempDir%/mails)
 
 	mailerPanel:
 		class: RM\MailPanel

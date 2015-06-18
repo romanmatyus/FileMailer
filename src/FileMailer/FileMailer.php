@@ -4,7 +4,7 @@ namespace RM;
 
 use Nette\Object,
 	Nette\Utils\DateTime,
-	Nette\FileNotFoundException,
+	Nette\DirectoryNotFoundException,
 	Nette\InvalidArgumentException,
 	Nette\InvalidStateException,
 	Nette\Utils\Strings,
@@ -26,15 +26,35 @@ class FileMailer extends Object implements IMailer
 	const FILE_EXTENSION = 'eml';
 
 	/** @var string */
-	public $tempDir;
+	private $tempDir;
 
 	/** @var string */
 	private $prefix;
 
 
-	public function __construct()
+	/**
+	 * @param  string $tempDir
+	 */
+	public function __construct($tempDir)
 	{
+		if (!is_dir($tempDir) && @mkdir($tempDir) === FALSE && !is_dir($tempDir)) {
+			throw new DirectoryNotFoundException("Directory '$tempDir' is not a directory or cannot be created.");
+
+		} elseif (!is_writable($tempDir)) {
+			throw new InvalidArgumentException("Directory '$tempDir' is not writable.");
+		}
+
+		$this->tempDir = $tempDir;
 		$this->prefix = date('YmdHis');
+	}
+
+
+	/**
+	 * @return string
+	 */
+	public function getTempDirectory()
+	{
+		return $this->tempDir;
 	}
 
 
@@ -45,7 +65,6 @@ class FileMailer extends Object implements IMailer
 	 */
 	public function send(Message $message)
 	{
-		$this->checkRequirements();
 		$content = $message->generateMessage();
 
 		preg_match('~Message-ID: <(?<message_id>\w+)[^>]+>~', $content, $matches);
@@ -56,23 +75,6 @@ class FileMailer extends Object implements IMailer
 		}
 
 		return $bytes;
-	}
-
-
-	/**
-	 * Check requirements.
-	 */
-	public function checkRequirements()
-	{
-		if ($this->tempDir === NULL) {
-			throw new InvalidArgumentException('Directory for temporary files is not defined.');
-
-		} elseif (!is_dir($this->tempDir) && @mkdir($this->tempDir) === FALSE && !is_dir($this->tempDir)) {
-			throw new FileNotFoundException("Directory '$this->tempDir' is not a directory or cannot be created.");
-
-		} elseif (!is_writable($this->tempDir)) {
-			throw new InvalidArgumentException("Directory '$this->tempDir' is not writable.");
-		}
 	}
 
 
@@ -169,15 +171,6 @@ class FileMailer extends Object implements IMailer
 			],
 			$headers
 		);
-	}
-
-
-	/**
-	 * @return string
-	 */
-	public function getPrefix()
-	{
-		return $this->prefix;
 	}
 
 }

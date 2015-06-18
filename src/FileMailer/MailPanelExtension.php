@@ -23,8 +23,8 @@ class MailPanelExtension extends CompilerExtension
 		'show' => ['subject', 'from', 'to'],
 		'autoremove' => '-5 seconds',
 		'hideEmpty' => TRUE,
-		'tempDir' => '%tempDir%/mails',
 		'debugger' => TRUE,
+		'tempDir' => '%tempDir%/mails',
 	];
 
 
@@ -52,8 +52,7 @@ class MailPanelExtension extends CompilerExtension
 		}
 
 		$builder->addDefinition($this->prefix('mailer'))
-			->setClass('RM\FileMailer')
-			->addSetup('$tempDir', [Helpers::expand($config['tempDir'], $builder->parameters)])
+			->setClass('RM\FileMailer', [Helpers::expand($config['tempDir'], $builder->parameters)])
 			->addSetup('@RM\MailPanel::setFileMailer', ['@self'])
 			->addSetup('@Tracy\Bar::addPanel', [$this->prefix('@panel')]);
 	}

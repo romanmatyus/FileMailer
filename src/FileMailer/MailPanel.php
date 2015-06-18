@@ -132,13 +132,13 @@ class MailPanel extends Control implements IBarPanel {
 	 */
 	private function processMessage()
 	{
-		if ($this->processed || !is_dir($this->fileMailer->tempDir)) {
+		if ($this->processed) {
 			return;
 		}
 		$this->processed = TRUE;
 		$this->autoremove();
 
-		foreach (Finder::findFiles('*')->in($this->fileMailer->tempDir) as $file) {
+		foreach (Finder::findFiles('*')->in($this->fileMailer->getTempDirectory()) as $file) {
 			$message = $this->cache->load($file->getFilename());
 			if ($message === NULL) {
 				$message = FileMailer::mailParser(file_get_contents($file), $file->getFilename());
@@ -166,7 +166,7 @@ class MailPanel extends Control implements IBarPanel {
 	private function autoremove()
 	{
 		if ($this->autoremove) {
-			foreach (Finder::findFiles('*')->in($this->fileMailer->tempDir) as $file) {
+			foreach (Finder::findFiles('*')->in($this->fileMailer->getTempDirectory()) as $file) {
 				$now = new DateTime;
 				$file_date = new DateTime('@' . filemtime($file));
 				$file_date->setTimezone($now->getTimezone());
