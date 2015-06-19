@@ -46,7 +46,7 @@
 				<span n:if="$message->attachments" class="tracy-collapsed">
 					<ul n:inner-foreach="$message->attachments as $filehash => $attachment">
 						<li>
-							<a href="/?mail-panel=download&mail-panel-mail={$message->filename}&mail-panel-file={$filehash}">
+							<a href="?mail-panel=download&amp;mail-panel-mail={$message->filename}&amp;mail-panel-file={$filehash}">
 								{$attachment->filename}
 							</a>
 						</li>
