@@ -1,4 +1,4 @@
-<div class="tracy-ContainerPanel">
+<div class="tracy-ContainerPanel" style="min-width: 700px">
 	<h1>MailPanel: {if $countAll == 0}no{else}{$countAll}{/if} mail{if $countAll > 1}s{/if}, {$countNew} new</h1>
 	<div class="tracy-inner">
 		<div n:foreach="$messages as $message">
@@ -7,7 +7,7 @@
 				<div n:if="$show" class="tracy-collapsed">
 					<table n:inner-foreach="$show as $item">
 						<tr n:ifset="$message->$item">
-							<td>{$item|firstUpper}:</td>
+							<th>{$item|firstUpper}:</th>
 							<td>{$message->$item}</td>
 						</tr>
 					</table>
@@ -17,7 +17,7 @@
 				<span class="tracy-collapsed">
 					<table n:inner-foreach="$message->header as $key => $value">
 						<tr>
-							<td>{$key|firstUpper}:</td>
+							<th>{$key|firstUpper}:</th>
 							<td>{$value}</td>
 						</tr>
 					</table>
@@ -25,13 +25,13 @@
 
 				<span class="tracy-toggle tracy-collapsed"><span class="tracy-dump-hash">plain</span></span>
 				<span class="tracy-collapsed">
-					<pre>{$message->plain}</pre>
+					<pre style="width:100%; border:1px dashed #ccc; padding: .3em">{$message->plain}</pre>
 				</span>
 
 				<span n:if="$message->html" class="tracy-toggle tracy-collapsed"><span class="tracy-dump-hash">html</span></span>
 				<div n:if="$message->html" class="tracy-collapsed">
 					{var $mailContent = str_replace(array("'","\n","\r","\t"),array("&apos;","","",""),$message->html)}
-					<iframe id="tracy-mailPanel-message-html-iframe-{$message->message_id}"></iframe>
+					<iframe id="tracy-mailPanel-message-html-iframe-{$message->message_id}" style="width:100%; border:1px dashed #ccc"></iframe>
 					<script type="text/javascript">
 						document.getElementById('tracy-mailPanel-message-html-iframe-{$message->message_id|noEscape}').contentWindow.document.write({$mailContent});
 					</script>
@@ -39,7 +39,7 @@
 
 				<span n:if="$message->raw" class="tracy-toggle tracy-collapsed"><span class="tracy-dump-hash">raw</span></span>
 				<span id="tracy-mailPanel-message-raw-{$message->message_id}" class="tracy-collapsed">
-					<pre>{$message->raw}</pre>
+					<pre style="width:100%; border:1px dashed #ccc; padding: .3em">{$message->raw}</pre>
 				</span>
 
 				<span n:if="$message->attachments" class="tracy-toggle tracy-collapsed"><span class="tracy-dump-hash">attachments ({count($message->attachments)})</span></span>
