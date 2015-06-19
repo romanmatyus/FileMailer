@@ -31,9 +31,6 @@ class MailPanel extends Control implements IBarPanel {
 	/** @var Cache */
 	private $cache;
 
-	/** @var Response */
-	private $response;
-
 	/** @var integer */
 	private $countAll = 0;
 
@@ -59,11 +56,10 @@ class MailPanel extends Control implements IBarPanel {
 	public $hideEmpty = TRUE;
 
 
-	public function __construct(Request $request, IStorage $cacheStorage, Response $response)
+	public function __construct(Request $request, IStorage $cacheStorage)
 	{
 		$this->request = $request;
 		$this->cache = new Cache($cacheStorage, 'MailPanel');
-		$this->response = $response;
 
 		switch($request->getQuery('mail-panel')) {
 			case 'download':
@@ -196,10 +192,11 @@ class MailPanel extends Control implements IBarPanel {
 	{
 		$message = $this->cache->load($filename);
 		$file = $message->attachments[$filehash];
-		$this->response->setContentType($file->type, 'UTF-8');
-		$this->response->setHeader('Content-Disposition', 'attachment; filename="' . $file->filename . '"');
-		$this->response->setHeader('Content-Length', strlen($file->data));
-		print base64_decode($file->data);
+		header("Content-Type: $file->type; charset='UTF-8'");
+		header("Content-Transfer-Encoding: base64");
+		header("Content-Disposition: attachment; filename=\"$file->filename\"");
+		header('Content-Length: ' . strlen($file->data));
+		echo base64_decode($file->data);
 		exit;
 	}
 
