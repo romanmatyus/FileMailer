@@ -151,6 +151,8 @@ class MailPanel extends Control implements IBarPanel {
 			$time = new DateTime;
 			if ($message->date > $time->modify($this->newMessageTime)) {
 				$this->countNew++;
+			} else {
+				$message->isOld = TRUE;
 			}
 
 			$this->countAll++;

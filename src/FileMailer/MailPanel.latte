@@ -3,7 +3,7 @@
 	<div class="tracy-inner">
 		<div n:foreach="$messages as $message">
 			<div class="tracy-dump">
-				<span class="tracy-toggle tracy-collapsed"><span class="tracy-dump-object">{ifset $message->subject}{$message->subject}{else}detail{/ifset}</span> <span n:if="$show" class="tracy-dump-hash">{$message->date|date:"H:i:s"}</span></span>
+				<span class="tracy-toggle tracy-collapsed"><span class="tracy-dump-object"{ifset $message->isOld} style="color:#444"{/}>{ifset $message->subject}{$message->subject}{else}detail{/ifset}</span> <span n:if="$show" class="tracy-dump-hash">{$message->date|date:"H:i:s"}</span></span>
 				<div n:if="$show" class="tracy-collapsed">
 					<table n:inner-foreach="$show as $item">
 						<tr n:ifset="$message->$item">
