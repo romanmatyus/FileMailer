@@ -1,113 +1,66 @@
-#FileMailer
+# FileMailer
+E-mails catching addon for [Nette Framework](http://nette.org). Emails are stored into files and shown in Tracy bar.
 
-Addon for catching e-mails in Nette FW to filesystem and showing it in the Debug Bar.
-
-```
-After configuring this addon is e-mails not sended, but ONLY stored to filesystem and showed in Debug Bar!
-```
+**!WARNING!** - After setting up this addon, all e-mails are not sent, but ONLY stored on filesystem and shown in Tracy bar.
 
 ![Demo](http://i41.tinypic.com/t9uuzq.png)
 
-##Killer features
 
+## Killer features
 - Simple instalation
 - Extensive configuration options
-- Full access to header
-- Show plain text and HTML output
-- Possibility download the attachments
+- Full access to headers
+- Plain text and HTML output
+- Possibility to download the attachments
 - Parser caching
 
-##Instalation
 
-Addon has two parts. First is `FileMailer` replaced the standard [Nette](http://nette.org) mailer and provides storing e-mails to filesystem. Second is `MailPanel` - extension of the Debug Bar provides graphical output of stored e-mails.
-
-###Download
-
-####Composer
-
-Add package to your `composer.json`:
-
+## Installation
+Add package to your project by the [Composer](https://getcomposer.org/):
 ```
-"rm/filemailer": "dev-master"
+composer require rm/filemailer
 ```
 
-####Direct download
-
-Download addon from [GitHub](https://github.com/romanmatyus/FileMailer) and unpack it in place where is indexed some RobotLoader.
-
-###Configuring
-
-####Simple
-
-Mails is stored to `/temp/mails` and showed in Debug Bar.
+or download addon manually from [GitHub](https://github.com/romanmatyus/FileMailer/releases) and unpack it in place indexed by RobotLoader.
 
 
+## Configuration
+The addon consists of two parts. The first one is the `FileMailer` which replaces the [IMailer](api.nette.org/Nette.Mail.IMailer.html) service and stores e-mails to filesystem. The second one is the `MailPanel` which is the Tracy bar panel and shows e-mails stored by FileMailer.
+
+Default options are used in following examples.
+
+### Setup by extension
+Register new compiler extension in `config.neon` and optionally configure:
 ```
-nette:
-	debugger:
-		bar:
-			- RM\MailPanel
+extensions:
+	mailer: RM\MailPanel\DI\MailPanelExtension
+
+mailer:
+	newMessageTime: '-2 seconds'    # how long consider email as new
+	show: [subject, from, to]       # which headers show in overview
+	autoremove: '-5 seconds'        # how old emails are purged
+	hideEmpty: yes                  # hide bar icon when no emails?
+	debugger: yes                   # enable Tracy bar
+	tempDir: '%tempDir/mails'       # change e-mails store directory
+```
+
+### Manual setup
+Replace the Nette's default IMailer service and register Tracy bar panel:
+```
 services:
-	nette.mailer:
-		class: RM\FileMailer
-		setup:
-			- $tempDir(%appDir%/../temp/mails)
-```
+	mail.mailer: RM\FileMailer(%tempDir%/mails)
 
-####Advanced
-
-As new message count only e-mails newer then `5 seconds`, automatic remove e-mails older then `1 minutes`, in tab show `Subject, From, To, Bc, Bcc` and not automatic hiding panel where should be showed no messages.
-
-
-```
-nette:
-  debugger:
-		bar:
-			- @mailPanel
-services:
-	nette.mailer:
-		class: RM\FileMailer
-		setup:
-			- $tempDir(%appDir%/../temp/mails)
-	mailPanel:
+	mailerPanel:
 		class: RM\MailPanel
+		autowired: no
 		setup:
-			- $newMessageTime(-5 seconds)
-			- $autoremove(-1 minutes)
-			- $show( [subject,from,to,bc,bcc] )
-			- $hideEmpty(FALSE)
+			- setFileMailer(@mail.mailer)	# required
+			- $newMessageTime('-5 seconds')
+			- $show([subject, from, to])
+			- $autoremove('-5 seconds')
+			- $hideEmpty(yes)
+
+tracy:
+	bar:
+		- @mailerPanel
 ```
-
-##Options
-
-Options for addon customization.
-
-###`FileMailer`
-
-| Name          |  Type  | Default value | Must be set |               Note                 |
-| ------------- |:------:|:-------------:| :----------:| ---------------------------------- |
-| $tempDir      | string |       -       |      yes    | Path to temporary files of e-mails |
-
-###`MailPanel`
-
-| Name            | Type        | Default value                    | Must be set | Note                                                             |
-| --------------- | ----------- | ---------------------------------| :----------:| ---------------------------------------------------------------- |
-| $newMessageTime | string      | `-10 seconds`                    | no          | By this time limit is defined new messages.                      |    
-| $show           | array       | `array("subject", "from", "to")` | no          | Array of default displayed headers.                               |
-| $autoremove     | bool/string | `FALSE`                          | no          | Define limit for automatic remove old e-mails. E.g. `-2 minutes` |
-| $hideEmpty      | bool        | `TRUE`                           | no          | Hide empty panel?                                                |
-
-##Changelog
-
-###Version 0.2
-
-- Add support of e-mail attachments
-- Sort e-mails by date
-- HTML e-mails showed into iframe
-- Refactoring
-- Fix copyright
-- Many bug fixes
-
-###Version 0.1
-
-- Initial commit
