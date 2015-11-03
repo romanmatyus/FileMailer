@@ -49,7 +49,7 @@ class FileMailer extends Object implements IMailer
 		$this->checkRequirements();
 		$content = $message->generateMessage();
 
-		preg_match('/Message-ID: <(?<message_id>\w+)@\w+>/', $content, $matches);
+		preg_match('/Message-ID: <(?<message_id>\w+)[^>]+>/', $content, $matches);
 
 		$path = $this->tempDir."/".$this->prefix.$matches['message_id'];
 		if ($bytes = file_put_contents($path, $content))
