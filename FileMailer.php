@@ -28,6 +28,8 @@ use Nette\Object,
  */
 class FileMailer extends Object implements IMailer
 {
+	const FILE_EXTENSION = 'eml';
+
 	/** @var string */
 	public $tempDir;
 
@@ -49,9 +51,9 @@ class FileMailer extends Object implements IMailer
 		$this->checkRequirements();
 		$content = $message->generateMessage();
 
-		preg_match('/Message-ID: <(?<message_id>\w+)@\w+>/', $content, $matches);
+		preg_match('/Message-ID: <(?<message_id>\w+)[^>]+>/', $content, $matches);
 
-		$path = $this->tempDir."/".$this->prefix.$matches['message_id'];
+		$path = $this->tempDir."/".$this->prefix.$matches['message_id'] . '.' . self::FILE_EXTENSION;
 		if ($bytes = file_put_contents($path, $content))
 			return $bytes;
 		else
